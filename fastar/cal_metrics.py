@@ -1,6 +1,9 @@
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 import sys, os
+from scipy import stats
+import importlib
+from util import *
 
 
 def find_proximity_cont(cfe, original_datapoint, continuous_features, mads):
@@ -17,6 +20,11 @@ def find_proximity_cat(cfe, original_datapoint, categorical_features):
     dist_cat = sparsity_cat * 1.0 / len(categorical_features)
     return dist_cat, sparsity_cat
 
+def find_air(cfe, sigma, n_samples, kde, model):
+    sampled_noise, _ = sample_plausible_noise(cfe.iloc[0].tolist(), sigma, n_samples, kde)
+    air = calculate_ir(sampled_noise, model)
+    # print(sampled_noise)
+    return air
 
 def follows_causality(cfe, original_datapoint, immutable_features, non_decreasing_features, correlated_features):
     follows = True
@@ -60,6 +68,7 @@ def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, data
     avg_causality = []
     avg_manifold_dist = []
     computed_cfs = []
+    avg_air = []
     for seq, dt in enumerate(cfs_found):
         if dt:  # find the metrics only if a cfe was found for a datapoint it was requested for. 
             cfe = final_cfs[seq:seq+1]
@@ -78,16 +87,22 @@ def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, data
             proximity_cont, sparsity_cont = find_proximity_cont(cfe, original_datapoint, continuous_features, mads)
             categorical_features = [f for f in dataset.columns.tolist() if f not in continuous_features]
             assert len(categorical_features) + len(continuous_features) == len(dataset.columns.tolist())
-            proximity_cat, sparsity_cat = find_proximity_cat(cfe, original_datapoint, categorical_features)
+            if len(categorical_features) != 0:
+                proximity_cat, sparsity_cat = find_proximity_cat(cfe, original_datapoint, categorical_features)
+            else:
+                proximity_cat = 0
+                sparsity_cat = 0
             sparsity = sparsity_cont + sparsity_cat
             causality = follows_causality(cfe, original_datapoint, immutable_features, non_decreasing_features, correlated_features)
             manifold_dist = find_manifold_dist(cfe, knn)
+            air = find_air(cfe, sigma=0.1, n_samples=50, kde=stats.gaussian_kde(dataset.T), model=model)
             
             avg_proximity_cont.append(proximity_cont)
             avg_proximity_cat.append(proximity_cat)
             avg_sparsity.append(sparsity)
             avg_causality.append(causality)
             avg_manifold_dist.append(manifold_dist)
+            avg_air.append(air)
     
     if save:
         np.save(f"saved_files/{method}_avg_proximity_cont.npy", avg_proximity_cont)
@@ -96,13 +111,14 @@ def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, data
         np.save(f"saved_files/{method}_avg_causality.npy", avg_causality)
         np.save(f"saved_files/{method}_avg_manifold_dist.npy", avg_manifold_dist)
         np.save(f"saved_files/{method}_computed_cfes.npy", np.array(computed_cfs))
+        np.save(f"saved_files/{method}_avg_air.npy", avg_air)
     # print(avg_proximity_cont, avg_proximity_cat, avg_sparsity, avg_causality, avg_manifold_dist)
     validity = sum(cfs_found) * 100.0 / find_cfs_points.shape[0]
     # Header: setting,validity,proximity_cont,proximity_cat,sparsity,manifold_dist,causality,time
     file = f"output/results/all_metrics_{method}.csv"
     if not os.path.exists(file):
-        with open(file, "a") as f:
-            print("setting,num_episodes,train_time,validity,proximity_cont,proximity_cat,sparsity,manifold,causality,time", file=f)
+        with open(file, "w") as f:
+            print("setting,num_episodes,train_time,validity,proximity_cont,proximity_cat,sparsity,manifold,causality,time,air", file=f)
     with open(file, "a") as f:
-        print(setting, num_episodes, round(train_time, 2), round(validity, 3), round(np.mean(avg_proximity_cont), 3), round(np.mean(avg_proximity_cat), 3), round(np.mean(avg_sparsity), 3), round(np.mean(avg_manifold_dist), 3), round(np.mean(avg_causality) * 100.0, 3), round(time_taken, 2), sep=',', file=f)
+        print(setting, num_episodes, round(train_time, 2), round(validity, 3), round(np.mean(avg_proximity_cont), 3), round(np.mean(avg_proximity_cat), 3), round(np.mean(avg_sparsity), 3), round(np.mean(avg_manifold_dist), 3), round(np.mean(avg_causality) * 100.0, 3), round(time_taken, 2), round(np.mean(avg_air), 2), sep=',', file=f)
 

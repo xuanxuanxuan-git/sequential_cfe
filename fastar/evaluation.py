@@ -88,7 +88,7 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
     eval_episode_rewards = []
     episodes = 3
     
-    if args.eval and ("german" in env_name) or ("adult" in env_name) or ("default" in env_name):
+    if args.eval and ("german" in env_name) or ("adult" in env_name) or ("default" in env_name) or ("syndata" in env_name):
         episodes = len(env_.undesirable_x)
     find_cfs_points = env_.scaler.transform(env_.undesirable_x[:episodes])
     
@@ -109,7 +109,7 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
             num_processes, actor_critic.recurrent_hidden_state_size, device=device)
         eval_masks = torch.zeros(num_processes, 1, device=device)
         path, reward, done, knn_distances = return_counterfactual(obs_original, obs, eval_recurrent_hidden_states, eval_masks, actor_critic, eval_envs, device, episode, env_name, args)
-        if args.eval and ("german" in env_name) or ("adult" in env_name) or ("default" in env_name):
+        if args.eval and ("german" in env_name) or ("adult" in env_name) or ("default" in env_name) or ("syndata" in env_name):
             # Found a counterfactual successfully. 
             if done:
                 try:
@@ -136,7 +136,7 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
     
     eval_envs.close()
 
-    if args.eval and ("german" in env_name) or ("adult" in env_name) or ("default" in env_name):
+    if args.eval and ("german" in env_name) or ("adult" in env_name) or ("default" in env_name) or ("syndata" in env_name):
         method = "fastCF"
         time_taken = time.time() - st
         print(f"Time: {time.time() - st}")
@@ -170,6 +170,12 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
             non_decreasing_features = ['AGE', 'EDUCATION']
             correlated_features = [('EDUCATION', 'AGE', 0.027)]     # in normalized data the increase is 0.027
             name_dataset = "default"
+        elif "syndata" in env_name:
+            continuous_features = ["x1", "x2"]
+            immutable_features = []
+            non_decreasing_features = []
+            correlated_features = []
+            name_dataset = "syndata"
 
         normalized_mads = {}
         for feature in continuous_features:
@@ -181,6 +187,6 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
         cal_metrics.calculate_metrics(method + name_dataset, final_cfs, cfs_found, find_cfs_points, env_.classifier, env_.dataset,
             env_.knn, continuous_features, normalized_mads, 
             immutable_features, non_decreasing_features, correlated_features, env_.scaler, var, time_taken, num_episodes, train_time, save=False)
-            
+
     print("Evaluation using {} episodes: mean reward {:.5f}\n".format(
-            episodes, np.mean(eval_episode_rewards)))
+            episodes, torch.stack(eval_episode_rewards).mean().item()))
