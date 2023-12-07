@@ -15,7 +15,8 @@ def calculate_mean_noise(noise_points, probabilities):
 
 
 def sample_plausible_noise(center, sigma, n_samples, kde):
-
+    np.random.seed(10)
+    random.seed(20)
     ## sample from normal distribution
     dim = len(center)
     normal_sampled_points = np.random.multivariate_normal(mean=center, cov=np.eye(dim)*np.square(sigma), size=5*n_samples)
