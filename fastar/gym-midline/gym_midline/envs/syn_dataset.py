@@ -192,6 +192,8 @@ class SynDataset(gym.Env):
                     next_state
                 )  # change self.state only if next_state is valid
                 reward, done = self.model()
+                if not done:
+                    self.state = self.shift_mean(next_state)
                 reward = reward - constant - knn_dist_loss
             else:
                 reward = -10
