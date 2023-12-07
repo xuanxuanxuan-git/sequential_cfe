@@ -97,11 +97,13 @@ class SynDataset(gym.Env):
     
     def shift_mean(self, center):
         next_state_noise, next_state_center = sample_plausible_noise(center, sigma=0.01, n_samples=20, kde=self.kde)
+        # print(next_state_center)
+        # print(next_state_noise)
         return next_state_center
     
     def step(self, action):
 
-        if len(action) == 1:
+        if not isinstance(action, int) and len(action) == 1:
             action = action[0]
         if isinstance(action, torch.Tensor):
             action = action.numpy()[0][0]
@@ -175,7 +177,7 @@ class SynDataset(gym.Env):
                 reward, done = self.model()
                 if not done:
                     self.state = self.shift_mean(next_state)
-                    reward = self.classifier.predict_proba(self.state.reshape())
+                    # reward = self.classifier.predict_proba(self.state.reshape())
                 reward = (
                     reward - constant - knn_dist_loss
                 )  # constant cost for each action
