@@ -7,7 +7,7 @@ from scipy import stats
 sys.path.append("../../../../")
 sys.path.append("../")
 sys.path.append("../../")
-sys.path.append("./")
+# sys.path.append("./")
 import classifier_dataset as classifier
 from .util import *
 
@@ -25,7 +25,6 @@ class SynDataset(gym.Env):
         )
         # Discrete action space
         self.action_space = gym.spaces.Discrete(2 * len(dataset.columns))
-
         low = np.ones(shape=len(dataset.columns)) * -1.0
         high = np.ones(shape=len(dataset.columns))
         self.observation_space = gym.spaces.Box(
@@ -89,12 +88,21 @@ class SynDataset(gym.Env):
             # print(next_state_noise)
             # print("Noise AIR", noise_air)
             reward = 100 - noise_air*100
-            return reward, True
-
+            if reward >= 80:
+                return reward, True
+            else: 
+                return reward, False
+        
         return probability_class1, False
     
+    def shift_mean(self, center):
+        next_state_noise, next_state_center = sample_plausible_noise(center, sigma=0.01, n_samples=20, kde=self.kde)
+        return next_state_center
     
     def step(self, action):
+
+        if len(action) == 1:
+            action = action[0]
         if isinstance(action, torch.Tensor):
             action = action.numpy()[0][0]
             assert isinstance(action, (int, np.int64))
@@ -120,17 +128,18 @@ class SynDataset(gym.Env):
                 amount = -0.05
             else:
                 amount = 0.05
-
         elif type_ == 2:
             decrease = False
-            amount = np.clip(
-                action[0], self.action_space.low[0], self.action_space.high[0]
-            )
+            # amount = np.clip(
+            #     action[0], self.action_space.low[0], self.action_space.high[0]
+            # )
+            amount = np.clip(action[0], -1, 1)
             if amount < 0:
                 decrease = True
-            feature = np.clip(
-                action[1], self.action_space.low[1], self.action_space.high[1]
-            )
+            # feature = np.clip(
+            #     action[1], self.action_space.low[1], self.action_space.high[1]
+            # )
+            feature = np.clip(action[0], 0, 3)
             feature += 1  # casts in 0 to 2 range
             feature_changing = int(
                 feature * (len(self.dataset.columns) // 2)
@@ -164,6 +173,9 @@ class SynDataset(gym.Env):
             ):  # lowest value for a feature is -1.0
                 self.state = np.array(next_state)
                 reward, done = self.model()
+                if not done:
+                    self.state = self.shift_mean(next_state)
+                    reward = self.classifier.predict_proba(self.state.reshape())
                 reward = (
                     reward - constant - knn_dist_loss
                 )  # constant cost for each action
