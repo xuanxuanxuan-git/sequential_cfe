@@ -64,11 +64,17 @@ def main():
                 num_episodes = 39061     # 35000
             else:
                 raise NotImplementedError
-
+        
+        elif "syndata" in args.save_dir and args.env_name in ["gym_midline:syndata-v01"]:
+            if args.num_steps == 128:
+                num_episodes = 78124     # 75000
+            elif args.num_steps == 256:
+                num_episodes = 10000     # 35000
         else:
             raise NotImplementedError
 
         save_path = os.path.join(args.save_dir, args.algo, args.env_name + f"_{num_episodes}.pt")
+        # save_path = os.path.join(args.save_dir, args.algo, "gym_midline")
         print(f"Loading trained model: {save_path}")
         actor_critic, ob_rms = torch.load(save_path)
         actor_critic.eval()
