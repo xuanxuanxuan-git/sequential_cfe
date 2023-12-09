@@ -58,7 +58,7 @@ def find_manifold_dist(cfe, knn):
 
 
 def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, dataset, knn, continuous_features, 
-                mads, immutable_features, non_decreasing_features, correlated_features, scaler, setting, time_taken, num_episodes, train_time, save=False):
+                mads, immutable_features, non_decreasing_features, correlated_features, scaler, setting, time_taken, num_episodes, train_time, spar, save=False):
     
     mads = [mads[key] if mads[key]!= 0.0 else 1.0 for key in mads]
 
@@ -93,6 +93,7 @@ def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, data
                 proximity_cat = 0
                 sparsity_cat = 0
             sparsity = sparsity_cont + sparsity_cat
+            sparsity = spar
             causality = follows_causality(cfe, original_datapoint, immutable_features, non_decreasing_features, correlated_features)
             manifold_dist = find_manifold_dist(cfe, knn)
             air = find_air(cfe, sigma=0.1, n_samples=100, kde=stats.gaussian_kde(dataset.T), model=model)

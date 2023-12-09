@@ -21,7 +21,7 @@ def return_counterfactual(obs_original, obs, eval_recurrent_hidden_states, eval_
     env_ = eval_envs.venv.venv.envs[0].env
     if debug2:
         print("Starting: ", obs_original.shape, list(obs_original))
-
+    action_set = []
     while (steps < max_steps) and (not done):
         with torch.no_grad():
             _, action, _, eval_recurrent_hidden_states = actor_critic.act(
@@ -32,6 +32,7 @@ def return_counterfactual(obs_original, obs, eval_recurrent_hidden_states, eval_
 
         # Obser reward and next obs
         obs, reward, done, infos, obs_original = eval_envs.step(action)
+        action_set.append(action)
         if ("german" in env_name) or ("adult" in env_name) or ("default" in env_name):
             this_knn_dist = env_.distance_to_closest_k_points(obs_original)
             knn_distances += this_knn_dist
@@ -67,9 +68,9 @@ def return_counterfactual(obs_original, obs, eval_recurrent_hidden_states, eval_
             # break
 
         path.append(obs_original[0].copy())
-
+    spar = len(set(action_set))//2
     # this returns only the last reward, and return the avg knn_distance not sum
-    return path, reward, done, knn_distances / len(path)
+    return path, reward, done, knn_distances / len(path), spar
 
 
 def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
@@ -90,6 +91,7 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
     
     if args.eval and ("german" in env_name) or ("adult" in env_name) or ("default" in env_name) or ("syndata" in env_name):
         episodes = len(env_.undesirable_x)
+    # episodes = 10
     find_cfs_points = env_.scaler.transform(env_.undesirable_x[:episodes])
     
     trajectories = []
@@ -108,7 +110,7 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
         eval_recurrent_hidden_states = torch.zeros(
             num_processes, actor_critic.recurrent_hidden_state_size, device=device)
         eval_masks = torch.zeros(num_processes, 1, device=device)
-        path, reward, done, knn_distances = return_counterfactual(obs_original, obs, eval_recurrent_hidden_states, eval_masks, actor_critic, eval_envs, device, episode, env_name, args)
+        path, reward, done, knn_distances, spar = return_counterfactual(obs_original, obs, eval_recurrent_hidden_states, eval_masks, actor_critic, eval_envs, device, episode, env_name, args)
         if args.eval and ("german" in env_name) or ("adult" in env_name) or ("default" in env_name) or ("syndata" in env_name):
             # Found a counterfactual successfully. 
             if done:
@@ -186,7 +188,7 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
 
         cal_metrics.calculate_metrics(method + name_dataset, final_cfs, cfs_found, find_cfs_points, env_.classifier, env_.dataset,
             env_.knn, continuous_features, normalized_mads, 
-            immutable_features, non_decreasing_features, correlated_features, env_.scaler, var, time_taken, num_episodes, train_time, save=False)
+            immutable_features, non_decreasing_features, correlated_features, env_.scaler, var, time_taken, num_episodes, train_time, spar, save=False)
 
     print("Evaluation using {} episodes: mean reward {:.5f}\n".format(
             episodes, torch.stack(eval_episode_rewards).mean().item()))
