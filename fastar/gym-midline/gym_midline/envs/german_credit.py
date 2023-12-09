@@ -131,9 +131,9 @@ class GermanCredit(gym.Env):
             )  # this is the feature that is changing
             decrease = bool(action % 2)
             if decrease:
-                amount = -0.1
+                amount = -0.05
             else:
-                amount = 0.1
+                amount = 0.05
 
         elif type_ == 2:
             decrease = False

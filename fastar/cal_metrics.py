@@ -21,7 +21,7 @@ def find_proximity_cat(cfe, original_datapoint, categorical_features):
     return dist_cat, sparsity_cat
 
 def find_air(cfe, sigma, n_samples, kde, model):
-    sampled_noise, _ = sample_plausible_noise(cfe.iloc[0].tolist(), sigma, n_samples, kde)
+    sampled_noise = sample_plausible_noise(cfe.iloc[0].tolist(), sigma, n_samples, kde)
     air = calculate_ir(sampled_noise, model)
     # print(sampled_noise)
     return air
@@ -95,7 +95,7 @@ def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, data
             sparsity = sparsity_cont + sparsity_cat
             causality = follows_causality(cfe, original_datapoint, immutable_features, non_decreasing_features, correlated_features)
             manifold_dist = find_manifold_dist(cfe, knn)
-            air = find_air(cfe, sigma=0.1, n_samples=50, kde=stats.gaussian_kde(dataset.T), model=model)
+            air = find_air(cfe, sigma=0.1, n_samples=100, kde=stats.gaussian_kde(dataset.T), model=model)
             
             avg_proximity_cont.append(proximity_cont)
             avg_proximity_cat.append(proximity_cat)
