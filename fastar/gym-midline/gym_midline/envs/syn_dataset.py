@@ -9,7 +9,7 @@ sys.path.append("../")
 sys.path.append("../../")
 # sys.path.append("./")
 import classifier_dataset as classifier
-from .util import *
+from util import *
 
 class SynDataset(gym.Env):
     metadata = {"render.modes": ["human"]}
@@ -18,7 +18,7 @@ class SynDataset(gym.Env):
     def __init__(self, dist_lambda):
         super(SynDataset, self).__init__()
         file1 = (
-            f"{os.path.dirname(os.path.realpath(__file__))}/syn_dataset.csv"
+            f"{os.path.dirname(os .path.realpath(__file__))}/syn_dataset.csv"
         )
         clf, dataset, scaler, X_test, X_train = classifier.train_model_syn_dataset(
             file=file1, parameter=1
@@ -83,22 +83,21 @@ class SynDataset(gym.Env):
         # print("resulting state:", self.state, probability_class1)
         # If the probability of belonging to the desired class is greater than 0.5, then it is a valid CFE.
         if probability_class1 >= 0.5:
-            next_state_noise, _ = sample_plausible_noise(self.state, sigma=0.1, n_samples=50, kde=self.kde)
+            next_state_noise = sample_plausible_noise(self.state, sigma=0.1, n_samples=50, kde=self.kde)
             noise_air = calculate_ir(next_state_noise, self.classifier)
             # print(next_state_noise)
             # print("Noise AIR", noise_air)
             reward = 100 - noise_air*100
-            if reward >= 80:
+            if reward >= 75:
                 return reward, True
             else: 
-                return reward, False
+                return probability_class1, False
         
         return probability_class1, False
     
     def shift_mean(self, center):
-        next_state_noise, next_state_center = sample_plausible_noise(center, sigma=0.01, n_samples=20, kde=self.kde)
+        next_state_center = calculate_mean_fast(center, sigma=0.01, n_samples=50, kde=self.kde)
         # print(next_state_center)
-        # print(next_state_noise)
         return next_state_center
     
     def step(self, action):
@@ -111,6 +110,8 @@ class SynDataset(gym.Env):
             type_ = 1
 
         elif isinstance(action, np.ndarray):
+            if len(action) == 1:
+                type_ = 1
             type_ = 2
 
         elif isinstance(action, (int, np.int64)):

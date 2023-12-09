@@ -86,7 +86,7 @@ class GermanCredit(gym.Env):
         # print("resulting state:", self.state, probability_class1)
         # If the probability of belonging to the desired class is greater than 0.5, then it is a valid CFE.
         if probability_class1 >= 0.5:
-            next_state_noise, _ = sample_plausible_noise(self.state, sigma=0.1, n_samples=100, kde=self.kde)
+            next_state_noise = sample_plausible_noise(self.state, sigma=0.1, n_samples=100, kde=self.kde)
             noise_air = calculate_ir(next_state_noise, self.classifier)
             # print(next_state_noise)
             # print("Noise AIR", noise_air)
@@ -99,7 +99,7 @@ class GermanCredit(gym.Env):
         return probability_class1, False
 
     def shift_mean(self, center):
-        next_state_noise, next_state_center = sample_plausible_noise(center, sigma=0.01, n_samples=50, kde=self.kde)
+        next_state_center = calculate_mean_fast(center, sigma=0.01, n_samples=50, kde=self.kde)
         # print(next_state_center)
         # print(next_state_noise)
         return next_state_center
