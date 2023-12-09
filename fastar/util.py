@@ -19,8 +19,8 @@ def sample_plausible_noise(center, sigma, n_samples, kde):
     random.shuffle(normal_sampled_points)
 
     ## resample noise
-    re_distribution = kde.logpdf(normal_sampled_points.T)
-    re_distribution = minmax_scale(re_distribution)
+    re_distribution = kde.pdf(normal_sampled_points.T)
+    # re_distribution = minmax_scale(re_distribution)
     re_distribution /= np.sum(re_distribution)
     # sanity check
     if np.isnan(re_distribution).any():

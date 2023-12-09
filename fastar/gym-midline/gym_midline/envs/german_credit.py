@@ -86,7 +86,7 @@ class GermanCredit(gym.Env):
         # print("resulting state:", self.state, probability_class1)
         # If the probability of belonging to the desired class is greater than 0.5, then it is a valid CFE.
         if probability_class1 >= 0.5:
-            next_state_noise = sample_plausible_noise(self.state, sigma=0.1, n_samples=100, kde=self.kde)
+            next_state_noise = sample_plausible_noise(self.state, sigma=0.1, n_samples=50, kde=self.kde)
             noise_air = calculate_ir(next_state_noise, self.classifier)
             # print(next_state_noise)
             # print("Noise AIR", noise_air)
@@ -106,8 +106,8 @@ class GermanCredit(gym.Env):
     
     def step(self, action):
 
-        if not isinstance(action, int) and len(action) == 1:
-            action = action[0]
+        # if not isinstance(action, int) and len(action) == 1:
+        #     action = action[0]
 
         if isinstance(action, torch.Tensor):
             action = action.numpy()[0][0]
@@ -131,9 +131,9 @@ class GermanCredit(gym.Env):
             )  # this is the feature that is changing
             decrease = bool(action % 2)
             if decrease:
-                amount = -0.05
+                amount = -0.1
             else:
-                amount = 0.05
+                amount = 0.1
 
         elif type_ == 2:
             decrease = False
