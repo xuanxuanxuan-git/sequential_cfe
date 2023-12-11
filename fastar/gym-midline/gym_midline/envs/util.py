@@ -38,7 +38,7 @@ def calculate_mean_fast(center, sigma, n_samples, kde):
     np.random.seed(20)
     random.seed(20)
     normal_gaussian = stats.multivariate_normal(mean=center, cov=np.eye(len(center))*np.square(sigma))
-    points_to_evaluate = np.random.uniform(low=-sigma*3, high=sigma*3, size=(n_samples, len(center))) + center
+    points_to_evaluate = np.random.uniform(low=-sigma*2, high=sigma*2, size=(n_samples, len(center))) + center
     kde_values = kde.pdf(points_to_evaluate.T)
 
     product_values = kde_values * normal_gaussian.pdf(points_to_evaluate)

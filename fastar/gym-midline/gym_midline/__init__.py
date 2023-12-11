@@ -27,6 +27,10 @@ register(
     entry_point='gym_midline.envs:GermanCredit100',
 )
 
+register(
+    id="german-nr-v01",
+    entry_point="gym_midline.envs:GermanCredit01nr"
+)
 
 # Adult Income
 register(
@@ -81,7 +85,7 @@ register(
     entry_point='gym_midline.envs:CreditDefault100',
 )
 
-# Credit Default
+# synthetic dataset
 register(
     id='syndata-v0',
     entry_point='gym_midline.envs:SynDataset0',
@@ -90,5 +94,16 @@ register(
 register(
     id='syndata-v01',
     entry_point='gym_midline.envs:SynDataset01',
+)
+
+# compas dataset
+register(
+    id='compas-v0',
+    entry_point='gym_midline.envs:Compas0',
+)
+
+register(
+    id='compas-v01',
+    entry_point='gym_midline.envs:Compas01',
 )
 
