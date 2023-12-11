@@ -131,10 +131,19 @@ def train_model_syn_dataset(file=None, parameter=None, drop=True):
         random_state = int(sys.argv[1])
     return architecture(parameter, dataset, y, drop_, X, random_state, drop)
 
+def rescale_compas(dataset):
+
+    score_column = dataset['score']
+    dataset.drop('score', axis=1, inplace=True)
+    scaler = MinMaxScaler(feature_range=(-1, 1))
+    df_scaled = pd.DataFrame(scaler.fit_transform(dataset), columns=dataset.columns)
+    df_scaled['score'] = score_column
+    df_scaled.to_csv("compas.csv", index=False)
+
 
 if __name__ == "__main__":
-    train_model_german()
-    train_model_adult()
-    train_model_default()
+    # train_model_german()
+    # train_model_adult()
+    # train_model_default()
     train_model_compas()
-    train_model_syn_dataset()
+    # train_model_syn_dataset()
