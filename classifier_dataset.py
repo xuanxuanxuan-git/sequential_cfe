@@ -103,6 +103,20 @@ def train_model_default(file=None, parameter=None, drop=True):
 
     return architecture(parameter, dataset, y, drop_, X, random_state, drop)
 
+def train_model_compas(file=None, parameter=None, drop=True):
+    if file == None:
+        file = f"{os.path.dirname(os.path.realpath(__file__))}/datasets/compas.csv"
+    dataset = pd.read_csv(file)
+    y = dataset["score"]
+    drop_ = ["score"]
+    X = dataset.drop(columns=[*drop_])
+    if "compas.csv" in file:
+        random_state = 42
+    else:
+        random_state = int(sys.argv[1])
+
+    return architecture(parameter, dataset, y, drop_, X, random_state, drop)
+
 
 def train_model_syn_dataset(file=None, parameter=None, drop=True):
     if file == None:
@@ -122,4 +136,5 @@ if __name__ == "__main__":
     train_model_german()
     train_model_adult()
     train_model_default()
+    train_model_compas()
     train_model_syn_dataset()
