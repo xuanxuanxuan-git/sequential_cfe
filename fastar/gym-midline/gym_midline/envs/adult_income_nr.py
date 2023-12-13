@@ -61,6 +61,8 @@ class AdultIncome(gym.Env):
 
     def step(self, action):
 
+        if not isinstance(action, int) and len(action) == 1:
+            action = action[0]
         if isinstance(action, torch.Tensor):
             action = action.numpy()[0][0]
             assert isinstance(action, (int, np.int64))
@@ -177,7 +179,6 @@ class AdultIncome(gym.Env):
 class AdultIncome01nr(AdultIncome):
     def __init__(self, enable_render=True):
         super(AdultIncome01nr, self).__init__(dist_lambda=0.1)
-
 
 
 if __name__ == "__main__":

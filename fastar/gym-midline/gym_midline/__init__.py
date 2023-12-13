@@ -58,6 +58,10 @@ register(
     entry_point='gym_midline.envs:AdultIncome100',
 )
 
+register(
+    id='adult-nr-v01',
+    entry_point='gym_midline.envs:AdultIncome01nr',
+)
 
 # Credit Default
 register(

@@ -37,6 +37,7 @@ def sample_plausible_noise(center, sigma, n_samples, kde):
 def calculate_mean_fast(center, sigma, n_samples, kde):
     np.random.seed(20)
     random.seed(20)
+    # return np.array(center)
     normal_gaussian = stats.multivariate_normal(mean=center, cov=np.eye(len(center))*np.square(sigma))
     points_to_evaluate = np.random.uniform(low=-sigma*2, high=sigma*2, size=(n_samples, len(center))) + center
     kde_values = kde.pdf(points_to_evaluate.T)
@@ -44,9 +45,9 @@ def calculate_mean_fast(center, sigma, n_samples, kde):
     product_values = kde_values * normal_gaussian.pdf(points_to_evaluate)
     new_center = np.average(points_to_evaluate, weights=product_values, axis=0)
 
-    ## go to a random point in each step
-    # product_values /= np.sum(product_values)
-    # new_center = points_to_evaluate[np.random.choice(len(points_to_evaluate), size=1, p=product_values)][0]
+    ## When training, go to the deterministic center, when evaluting, go to a random point
+    product_values /= np.sum(product_values)
+    new_center = points_to_evaluate[np.random.choice(len(points_to_evaluate), size=1, p=product_values)][0]
 
     return new_center
 
