@@ -50,7 +50,7 @@ class Compas(gym.Env):
             # np.save(f"{os.path.dirname(os.path.realpath(__file__))}/../../../datapoints_to_generate_cfes/undesirable_x_compas.npy", undesirable_x)
                 
         print(len(self.undesirable_x), "Total datapoints to run the approach on")
-        self.kde = stats.gaussian_kde(dataset.T)
+        self.action_seq = []
         self.reset()
 
     def model(self):
@@ -61,27 +61,32 @@ class Compas(gym.Env):
         # print("resulting state:", self.state, probability_class1)
         # If the probability of belonging to the desired class is greater than 0.5, then it is a valid CFE.
         if probability_class1 >= 0.5:
-            start_time = time.time()
-            next_state_noise = sample_plausible_noise(self.state, sigma=0.1, n_samples=50, kde=self.kde)
-            noise_air = calculate_ir(next_state_noise, self.classifier)
-            reward = 100 - noise_air*100
-            if reward >= 75:
-                return 100, True
-            else: 
-                return probability_class1, False
+            return 100, True
         
         return probability_class1, False
+ 
+    
+    # def model(self):
+    #     # The probability of belonging to class 1 (the desired class)
+    #     probability_class1 = self.classifier.predict_proba(
+    #         self.state.reshape(1, -1)
+    #     )[0][1]
+
+    #     if probability_class1 >= 0.5:
+    #         start_time = time.time()
+    #         next_state_noise = sample_plausible_noise(self.state, sigma=0.1, n_samples=50, kde=self.kde)
+    #         noise_air = calculate_ir(next_state_noise, self.classifier)
+    #         reward = 100 - noise_air*100
+    #         if reward >= 75:
+    #             return reward, True
+    #         else: 
+    #             return probability_class1, False
+        
+    #     return probability_class1, False
 
     def shift_mean(self, center):
 
-        # 50% chance it will not shift the center
-        # prob = random.random()
-        # if prob<0.5:
-        #     return center
-        
         next_state_center = calculate_mean_fast(center, sigma=0.01, n_samples=50, kde=self.kde)
-        # print(next_state_center)
-        # print(next_state_noise)
         return next_state_center
     
     def step(self, action):
@@ -105,8 +110,6 @@ class Compas(gym.Env):
             raise NotImplementedError
 
         info = {}
-        # print("type: ", type_)
-        # print(self.action_space)
         if type_ == 1:
             feature_changing = action // 2		# this is the feature that is changing
             decrease = bool(action % 2)
@@ -129,8 +132,7 @@ class Compas(gym.Env):
 
         reward = -10
         done = False
-        # print(feature_changing)
-        # print(self.dataset.iloc[:, feature_changing].name)
+
         for imf in self.immutable_features:
             if imf in self.dataset.iloc[:, feature_changing].name:
                 return self.state, reward, done, info
@@ -150,10 +152,10 @@ class Compas(gym.Env):
             if next_state[feature_changing] > -1.0:    # lowest value for a feature is -1.0
                 self.state = np.array(next_state)
                 reward, done = self.model()
-                if not done:
-                    self.state = self.shift_mean(next_state)
-                    reward = self.classifier.predict_proba(self.state.reshape(1,-1))[0][1]
-                reward = reward - constant - knn_dist_loss	    # constant cost for each action
+                # if not done:
+                #     self.state = self.shift_mean(next_state)
+                reward = reward - constant - knn_dist_loss	    # constant cost for each actionp
+                self.action_seq.append((feature_changing, action_))
             else:
                 reward = -10
                 done = False
@@ -161,10 +163,10 @@ class Compas(gym.Env):
             if next_state[feature_changing] < 1.0:     # highest value possible
                 self.state = np.array(next_state)       # change self.state only if next_state is valid
                 reward, done = self.model()
-                if not done:
-                    self.state = self.shift_mean(next_state)
-                    reward = self.classifier.predict_proba(self.state.reshape(1,-1))[0][1]
+                # if not done:
+                #     self.state = self.shift_mean(next_state)
                 reward = reward - constant - knn_dist_loss
+                self.action_seq.append((feature_changing, action_))
             else:
                 reward = -10
                 done = False
@@ -178,6 +180,7 @@ class Compas(gym.Env):
     
     def reset(self):
         seq = int(os.environ['SEQ'])
+        self.action_seq = []
         if len(self.undesirable_x) == 0:
             return
         # This is used during training of the agent. 
