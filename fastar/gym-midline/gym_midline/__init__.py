@@ -111,3 +111,13 @@ register(
     entry_point='gym_midline.envs:Compas01',
 )
 
+# heloc dataset
+register(
+    id='heloc-v0',
+    entry_point='gym_midline.envs:HELOC0',
+)
+
+register(
+    id='heloc-v01',
+    entry_point='gym_midline.envs:HELOC01',
+)

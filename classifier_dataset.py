@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.neural_network import MLPClassifier
-from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
@@ -118,6 +117,20 @@ def train_model_compas(file=None, parameter=None, drop=True):
     return architecture(parameter, dataset, y, drop_, X, random_state, drop)
 
 
+def train_model_heloc(file=None, parameter=None, drop=True):
+    if file == None:
+        file = f"{os.path.dirname(os.path.realpath(__file__))}/datasets/heloc.csv"
+    dataset = pd.read_csv(file)
+    y = dataset["RiskPerformance"]
+    drop_ = ["RiskPerformance"]
+    X = dataset.drop(columns=[*drop_])
+    if "heloc.csv" in file:
+        random_state = 42
+    else:
+        random_state = int(sys.argv[1])
+
+    return architecture(parameter, dataset, y, drop_, X, random_state, drop)
+
 def train_model_syn_dataset(file=None, parameter=None, drop=True):
     if file == None:
         file = f"{os.path.dirname(os.path.realpath(__file__))}/datasets/syn_dataset.csv"
@@ -131,19 +144,20 @@ def train_model_syn_dataset(file=None, parameter=None, drop=True):
         random_state = int(sys.argv[1])
     return architecture(parameter, dataset, y, drop_, X, random_state, drop)
 
-def rescale_compas(dataset):
+def rescale_dataset(dataset):
 
-    score_column = dataset['score']
-    dataset.drop('score', axis=1, inplace=True)
+    target_column = dataset["RiskPerformance"]
+    dataset.drop("RiskPerformance", axis=1, inplace=True)
     scaler = MinMaxScaler(feature_range=(-1, 1))
     df_scaled = pd.DataFrame(scaler.fit_transform(dataset), columns=dataset.columns)
-    df_scaled['score'] = score_column
-    df_scaled.to_csv("compas.csv", index=False)
+    df_scaled["RiskPerformance"] = target_column
+    df_scaled.to_csv("heloc.csv", index=False)
 
 
 if __name__ == "__main__":
     # train_model_german()
     # train_model_adult()
     # train_model_default()
-    train_model_compas()
+    # train_model_compas()
+    train_model_heloc()
     # train_model_syn_dataset()
