@@ -51,6 +51,7 @@ class Compas(gym.Env):
                 
         print(len(self.undesirable_x), "Total datapoints to run the approach on")
         self.action_seq = []
+        self.kde = stats.gaussian_kde(scaler.transform(dataset).T)
         self.reset()
 
     def model(self):
@@ -74,7 +75,7 @@ class Compas(gym.Env):
 
     #     if probability_class1 >= 0.5:
     #         start_time = time.time()
-    #         next_state_noise = sample_plausible_noise(self.state, sigma=0.1, n_samples=50, kde=self.kde)
+    #         next_state_noise = sample_plausible_noise(self.state, sigma=0.1, n_samples=400, kde=self.kde)
     #         noise_air = calculate_ir(next_state_noise, self.classifier)
     #         reward = 100 - noise_air*100
     #         if reward >= 75:
@@ -86,7 +87,7 @@ class Compas(gym.Env):
 
     def shift_mean(self, center):
 
-        next_state_center = calculate_mean_fast(center, sigma=0.01, n_samples=50, kde=self.kde)
+        next_state_center = calculate_mean_fast(center, sigma=0.03, n_samples=50, kde=self.kde)
         return next_state_center
     
     def step(self, action):
@@ -139,6 +140,13 @@ class Compas(gym.Env):
 
         # age can't decrease
         if self.dataset.iloc[:, feature_changing].name == 'age' and decrease:
+            return self.state, reward, done, info
+
+        # race and sex cannot change
+        if self.dataset.iloc[:, feature_changing].name == "race_Other":
+            return self.state, reward, done, info
+        
+        if self.dataset.iloc[:, feature_changing].name == "sex_Male":
             return self.state, reward, done, info
 
         action_ = amount

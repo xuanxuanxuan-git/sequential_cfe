@@ -155,9 +155,9 @@ def rescale_dataset(dataset):
 
 
 if __name__ == "__main__":
-    # train_model_german()
+    train_model_german()
     # train_model_adult()
     # train_model_default()
     # train_model_compas()
-    train_model_heloc()
+    # train_model_heloc()
     # train_model_syn_dataset()

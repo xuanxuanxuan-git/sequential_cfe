@@ -60,14 +60,15 @@ def calculate_dist(dataset, factual_point, action_seq):
     return l1_dist, l0_dist
 
 
-def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, dataset, scaler, setting, time_taken, num_episodes, train_time, action_seq_all, test_dataset, save=False):
+def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, dataset, scaler, setting, time_taken, num_episodes, train_time, action_seq_all, density_dataset, save=False):
     
     # noise_type = "non"
     # noise_type = "pla"
     noise_type = "pth"
 
-    if ("adult" in method) or ("heloc" in method):
-        scaled_dataset = test_dataset
+    # scaled_dataset is test dataset if adult, or train dataset if heloc
+    if ("adult" in method):
+        scaled_dataset = density_dataset
     else:
         scaled_dataset = scaler.transform(dataset)
 

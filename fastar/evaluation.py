@@ -169,8 +169,9 @@ def evaluate(actor_critic, ob_rms, env_name, seed, num_processes, eval_log_dir,
 
         final_cfs = pd.DataFrame(final_cfs, columns=env_.dataset.columns.tolist())
         find_cfs_points = pd.DataFrame(find_cfs_points, columns=env_.dataset.columns.tolist())
+        density_dataset = env_.test_dataset if name_dataset == "adult" else env_.train_dataset
 
-        cal_metrics.calculate_metrics(method + name_dataset, final_cfs, cfs_found, find_cfs_points, env_.classifier, env_.dataset, env_.scaler, var, time_taken, num_episodes, train_time, action_seq_all, env_.test_dataset, save=False)
+        cal_metrics.calculate_metrics(method + name_dataset, final_cfs, cfs_found, find_cfs_points, env_.classifier, env_.dataset, env_.scaler, var, time_taken, num_episodes, train_time, action_seq_all, density_dataset, save=False)
 
     print("Evaluation using {} episodes: mean reward {:.5f}\n".format(
             episodes, torch.stack(eval_episode_rewards).mean().item()))
