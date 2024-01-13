@@ -39,7 +39,7 @@ results
 
 ## Baselines
 
-Wachter, GrSp, CoGS, PROBE, ARAR, and ROAR are implemented using the [CARLA](https://github.com/carla-recourse/CARLA/tree/main?tab=readme-ov-file) package. To set up the environment for CARLA, run the following command:
+Wachter, GrSp, DiCE, CoGS, PROBE, ARAR, and ROAR are implemented using the [CARLA](https://github.com/carla-recourse/CARLA/tree/main?tab=readme-ov-file) package. To set up the environment for CARLA, run the following command:
 ```
 pip install carla-recourse
 ``` 
