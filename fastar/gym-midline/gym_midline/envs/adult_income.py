@@ -15,11 +15,10 @@ class AdultIncome(gym.Env):
         clf, dataset, scaler, X_test, X_train = classifier.train_model_adult(file=file1, parameter=1)
         # Discrete action space
         self.action_space = gym.spaces.Discrete(2 * len(dataset.columns))
-        # Box: continuous value 
+
         low = np.ones(shape=len(dataset.columns)) * -1.0
         high = np.ones(shape=len(dataset.columns))
-        self.observation_space = gym.spaces.Box(low=low, high=high, dtype=np.float64)
-        
+        self.observation_space = gym.spaces.Box(low=low, high=high, dtype=np.float)
         self.state = None
         self.dist_lambda = dist_lambda
         self.immutable_features = ['marital-status', 'race', 'sex', 'native-country']
@@ -60,7 +59,6 @@ class AdultIncome(gym.Env):
         return probability_class1, False
 
     def step(self, action):
-
         if isinstance(action, torch.Tensor):
             action = action.numpy()[0][0]
             assert isinstance(action, (int, np.int64))
@@ -76,8 +74,7 @@ class AdultIncome(gym.Env):
             raise NotImplementedError
 
         info = {}
-        # print("type: ", type_)
-        # print(self.action_space)
+
         if type_ == 1:
             feature_changing = action // 2		# this is the feature that is changing
             decrease = bool(action % 2)
@@ -100,8 +97,7 @@ class AdultIncome(gym.Env):
 
         reward = -10
         done = False
-        # print(feature_changing)
-        # print(self.dataset.iloc[:, feature_changing].name)
+
         for imf in self.immutable_features:
             if imf in self.dataset.iloc[:, feature_changing].name:
                 return self.state, reward, done, info
@@ -201,6 +197,5 @@ class AdultIncome100(AdultIncome):
 
 if __name__ == "__main__":
     x = AdultIncome01()
-    action = 5
-    print(x.step(action))
+    print(x.step(5))
     print(x.step(9))

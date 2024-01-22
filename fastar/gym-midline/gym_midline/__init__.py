@@ -27,10 +27,6 @@ register(
     entry_point='gym_midline.envs:GermanCredit100',
 )
 
-register(
-    id="german-nr-v01",
-    entry_point="gym_midline.envs:GermanCredit01nr"
-)
 
 # Adult Income
 register(
@@ -58,10 +54,6 @@ register(
     entry_point='gym_midline.envs:AdultIncome100',
 )
 
-register(
-    id='adult-nr-v01',
-    entry_point='gym_midline.envs:AdultIncome01nr',
-)
 
 # Credit Default
 register(
@@ -89,35 +81,3 @@ register(
     entry_point='gym_midline.envs:CreditDefault100',
 )
 
-# synthetic dataset
-register(
-    id='syndata-v0',
-    entry_point='gym_midline.envs:SynDataset0',
-)
-
-register(
-    id='syndata-v01',
-    entry_point='gym_midline.envs:SynDataset01',
-)
-
-# compas dataset
-register(
-    id='compas-v0',
-    entry_point='gym_midline.envs:Compas0',
-)
-
-register(
-    id='compas-v01',
-    entry_point='gym_midline.envs:Compas01',
-)
-
-# heloc dataset
-register(
-    id='heloc-v0',
-    entry_point='gym_midline.envs:HELOC0',
-)
-
-register(
-    id='heloc-v01',
-    entry_point='gym_midline.envs:HELOC01',
-)

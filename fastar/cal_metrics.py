@@ -1,85 +1,65 @@
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
-from sklearn.preprocessing import MinMaxScaler
-import sys, os, copy
-from scipy import stats
-import importlib
-from util import *
+import sys, os
 
-def find_air(cfe, sigma, n_samples, kde, model):
+
+def find_proximity_cont(cfe, original_datapoint, continuous_features, mads):
+    diff = original_datapoint[continuous_features].to_numpy() - cfe[continuous_features].to_numpy()
+    dist_cont = np.mean(np.divide(np.abs(diff), mads))
+    sparsity_cont = diff[0].nonzero()[0].shape[0]
+    return dist_cont, sparsity_cont
+
+
+def find_proximity_cat(cfe, original_datapoint, categorical_features):
+    cfe_cats = cfe[categorical_features].to_numpy().astype(float)
+    diff = original_datapoint[categorical_features].to_numpy() - cfe_cats
+    sparsity_cat = diff[0].nonzero()[0].shape[0]
+    dist_cat = sparsity_cat * 1.0 / len(categorical_features)
+    return dist_cat, sparsity_cat
+
+
+def follows_causality(cfe, original_datapoint, immutable_features, non_decreasing_features, correlated_features):
+    follows = True
+    diff = cfe.to_numpy().astype(float) - original_datapoint.to_numpy()
+    m2 = (diff != 0)[0].nonzero()
+    changed_columns = cfe.columns[m2].tolist()
+    # This won't hold for random and greedy approaches. 
+    # assert len(set(changed_columns).intersection(set(immutable_features))) == 0
     
-    if not isinstance(cfe, np.ndarray):
-        cfe = cfe.iloc[0].tolist()
-    sampled_noise_pl = sample_plausible_noise(cfe, sigma, n_samples, kde)
-    sampled_noise_ga = sample_gaussian_noise(cfe, sigma, n_samples)
-
-    pl_air = calculate_ir(sampled_noise_pl, model)
-    ga_air = calculate_ir(sampled_noise_ga, model)
-
-    return pl_air, ga_air
-
-
-def noisy_implementation(factual_point, action_seq, kde, model, sigma, freq):
-    current_state = list(copy.deepcopy(factual_point.iloc[0]))
-    action_seq = action_seq[0]
-    for (feature, amount) in action_seq:
-        current_state[feature] = current_state[feature] + amount
-        current_state = sample_plausible_noise(current_state, sigma, 1, kde)[0]
-    if model.predict(np.array(current_state).reshape(1,-1)) < 0.5:
-        return False
-    else:
-        return True
-
-
-def repeat_noisy_implementation(factual_point, action_seq, kde, model, sigma, freq, times = 1000):
-    ir = 0
-    for i in range(times):
-        result = noisy_implementation(factual_point, action_seq, kde, model, sigma, freq)
-        if not result:
-            ir += 1   
-    air = ir/times
-    return air
-
-def calculate_dist(dataset, factual_point, action_seq):
-
-    current_state = list(copy.deepcopy(factual_point.iloc[0]))
-    action_seq = action_seq[0]
-    for (feature, amount) in action_seq:
-        current_state[feature] = current_state[feature] + amount
+    # Check if non-decreasing features are decreasing. 
+    diff_nondecrease = cfe[non_decreasing_features].to_numpy().astype(float) - original_datapoint[non_decreasing_features].to_numpy()
+    m2 = (diff_nondecrease < 0)[0].nonzero()
+    if m2[0].shape[0] > 0:
+        follows = False
+        return follows
     
-    cf_point = np.array(current_state).reshape(1, -1)
-    diff = (cf_point[0] - factual_point.iloc[0].values)
-    l0_dist = np.count_nonzero(diff)
+    for f1, f2, linear_add in correlated_features:
+        seq_f1 = cfe.columns.tolist().index(f1)
+        seq_f2 = cfe.columns.tolist().index(f2)
+        if diff[0][seq_f1] > 0:      # If there is an increase in f1
+            if not diff[0][seq_f2] >= linear_add:      # then there must be an increase in f2 of value 'linear_add'
+                follows = False
+                return follows
 
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    scaler.fit(dataset)
-    scaled_factual = scaler.transform(factual_point)
-    scaled_cf = scaler.transform(cf_point)
-
-    l1_dist = np.linalg.norm((scaled_cf-scaled_factual), ord=1, axis=1)
-    return l1_dist, l0_dist
+    return follows
 
 
-def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, dataset, scaler, setting, time_taken, num_episodes, train_time, action_seq_all, density_dataset, save=False):
+def find_manifold_dist(cfe, knn):
+    nearest_dist, nearest_points = knn.kneighbors(cfe, 1, return_distance=True)
+    return np.mean(nearest_dist)
+
+
+def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, dataset, knn, continuous_features, 
+                mads, immutable_features, non_decreasing_features, correlated_features, scaler, setting, time_taken, num_episodes, train_time, save=False):
     
-    # noise_type = "non"
-    # noise_type = "pla"
-    noise_type = "pth"
+    mads = [mads[key] if mads[key]!= 0.0 else 1.0 for key in mads]
 
-    # scaled_dataset is test dataset if adult, or train dataset if heloc
-    if ("adult" in method):
-        scaled_dataset = density_dataset
-    else:
-        scaled_dataset = scaler.transform(dataset)
-
+    avg_proximity_cont = []
+    avg_proximity_cat = []
     avg_sparsity = []
+    avg_causality = []
+    avg_manifold_dist = []
     computed_cfs = []
-    avg_pl_air = []
-    avg_ga_air =[]
-    avg_dist = []
-    avg_noise_rate = []
-    count = 0
-
     for seq, dt in enumerate(cfs_found):
         if dt:  # find the metrics only if a cfe was found for a datapoint it was requested for. 
             cfe = final_cfs[seq:seq+1]
@@ -90,39 +70,39 @@ def calculate_metrics(method, final_cfs, cfs_found, find_cfs_points, model, data
             try:
                 assert cfe_prediction != original_prediction
             except:
-                pass
-        
-            pl_air, ga_air = find_air(cfe, sigma=0.1, n_samples=1000, kde=stats.gaussian_kde(scaled_dataset.T), model=model)
-            action_seq = action_seq_all[count:count+1]
-            noise_rate = repeat_noisy_implementation(original_datapoint, action_seq, kde=stats.gaussian_kde(scaled_dataset.T), model=model, sigma=np.sqrt(0.001), freq=1, times=100)
-            avg_noise_rate.append(noise_rate)
-            count += 1
-
-            l1_dist, sparsity = calculate_dist(scaled_dataset, original_datapoint, action_seq)
-            avg_dist.append(l1_dist)
+                if "MACE" in method:
+                    pass
+                else:
+                    # print(seq, "failing as CFE")
+                    pass
+            proximity_cont, sparsity_cont = find_proximity_cont(cfe, original_datapoint, continuous_features, mads)
+            categorical_features = [f for f in dataset.columns.tolist() if f not in continuous_features]
+            assert len(categorical_features) + len(continuous_features) == len(dataset.columns.tolist())
+            proximity_cat, sparsity_cat = find_proximity_cat(cfe, original_datapoint, categorical_features)
+            sparsity = sparsity_cont + sparsity_cat
+            causality = follows_causality(cfe, original_datapoint, immutable_features, non_decreasing_features, correlated_features)
+            manifold_dist = find_manifold_dist(cfe, knn)
             
+            avg_proximity_cont.append(proximity_cont)
+            avg_proximity_cat.append(proximity_cat)
             avg_sparsity.append(sparsity)
-            avg_pl_air.append(pl_air)
-            avg_ga_air.append(ga_air)
+            avg_causality.append(causality)
+            avg_manifold_dist.append(manifold_dist)
     
-    print("Gaussian AIR: {}, std: {}".format(round(np.mean(avg_ga_air), 2), np.std(avg_ga_air)))
-    print("Plausible AIR: {}, std: {}".format(round(np.mean(avg_pl_air), 2), np.std(avg_pl_air)))
-    print("Path variation noise rate: {}, std: {}".format(round(np.mean(avg_noise_rate), 2), np.std(avg_noise_rate)))
-    print("Normalised l1 dist: {}, std: {}".format(round(np.mean(avg_dist), 2), np.std(avg_dist)))
-    print("Sparsity: {}, std: {}".format(round(np.mean(avg_sparsity), 2), np.std(avg_sparsity)))
-    
+    if save:
+        np.save(f"saved_files/{method}_avg_proximity_cont.npy", avg_proximity_cont)
+        np.save(f"saved_files/{method}_avg_proximity_cat.npy", avg_proximity_cat)
+        np.save(f"saved_files/{method}_avg_sparsity.npy", avg_sparsity)
+        np.save(f"saved_files/{method}_avg_causality.npy", avg_causality)
+        np.save(f"saved_files/{method}_avg_manifold_dist.npy", avg_manifold_dist)
+        np.save(f"saved_files/{method}_computed_cfes.npy", np.array(computed_cfs))
+    # print(avg_proximity_cont, avg_proximity_cat, avg_sparsity, avg_causality, avg_manifold_dist)
     validity = sum(cfs_found) * 100.0 / find_cfs_points.shape[0]
-    
-    # Header: setting,efficacy,sparsity,l1,time,gaussian,plausible,path
+    # Header: setting,validity,proximity_cont,proximity_cat,sparsity,manifold_dist,causality,time
     file = f"output/results/all_metrics_{method}.csv"
     if not os.path.exists(file):
-        with open(file, "w") as f:
-            print("setting,num_episodes,noise,train_time,efficacy,sparsity,l1,time,gaussian,plausible,path", file=f)
+        with open(file, "a") as f:
+            print("setting,num_episodes,train_time,validity,proximity_cont,proximity_cat,sparsity,manifold,causality,time", file=f)
     with open(file, "a") as f:
-        print(setting, num_episodes, noise_type, round(train_time, 2), round(validity, 2), 
-              f"{round(np.mean(avg_sparsity), 2)}({round(np.std(avg_sparsity), 2)})", 
-              f"{round(np.mean(avg_dist), 2)}({round(np.std(avg_dist), 2)})", 
-              round(time_taken, 2), 
-              f"{round(np.mean(avg_ga_air), 2)}({round(np.std(avg_ga_air), 2)})", 
-              f"{round(np.mean(avg_pl_air), 2)}({round(np.std(avg_pl_air), 2)})", 
-              f"{round(np.mean(avg_noise_rate), 2)}({round(np.std(avg_noise_rate), 2)})", sep=',', file=f)
+        print(setting, num_episodes, round(train_time, 2), round(validity, 3), round(np.mean(avg_proximity_cont), 3), round(np.mean(avg_proximity_cat), 3), round(np.mean(avg_sparsity), 3), round(np.mean(avg_manifold_dist), 3), round(np.mean(avg_causality) * 100.0, 3), round(time_taken, 2), sep=',', file=f)
+

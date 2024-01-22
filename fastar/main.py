@@ -36,11 +36,12 @@ def main():
     utils.cleanup_log_dir(eval_log_dir)
 
     torch.set_num_threads(1)
-    device = torch.device("cuda:1" if args.cuda else "cpu")
+    device = torch.device("cuda:0" if args.cuda else "cpu")
+    
     # If instead of training, we want to evaluate
     if args.eval:
         # German 5 with sampling from training dataset
-        if 'german5' in args.save_dir and 'sampletrain' in args.save_dir and args.env_name in ['gym_midline:german-v0', 'gym_midline:german-v01', 'gym_midline:german-v1', 'gym_midline:german-v10', 'gym_midline:german-v100', "gym_midline:german-nr-v01"]:
+        if 'german5' in args.save_dir and 'sampletrain' in args.save_dir and args.env_name in ['gym_midline:german-v0', 'gym_midline:german-v01', 'gym_midline:german-v1', 'gym_midline:german-v10', 'gym_midline:german-v100']:
             if args.num_steps == 128:
                 num_episodes = 39061     # 234374
             elif args.num_steps == 256:
@@ -48,11 +49,11 @@ def main():
             else:
                 raise NotImplementedError
 
-        elif 'adult' in args.save_dir and args.env_name in ['gym_midline:adult-v0', 'gym_midline:adult-v01', 'gym_midline:adult-v1', 'gym_midline:adult-v10', 'gym_midline:adult-v100', 'gym_midline:adult-nr-v01']:
+        elif 'adult' in args.save_dir and args.env_name in ['gym_midline:adult-v0', 'gym_midline:adult-v01', 'gym_midline:adult-v1', 'gym_midline:adult-v10', 'gym_midline:adult-v100']:
             if args.num_steps == 128:
                 num_episodes = 78124     # 75000
             elif args.num_steps == 256:
-                num_episodes = 15000     # 35000
+                num_episodes = 39061     # 35000
             else:
                 raise NotImplementedError
 
@@ -63,33 +64,11 @@ def main():
                 num_episodes = 39061     # 35000
             else:
                 raise NotImplementedError
-        
-        elif "syndata" in args.save_dir and args.env_name in ["gym_midline:syndata-v01"]:
-            if args.num_steps == 128:
-                num_episodes = 78124     # 75000
-            elif args.num_steps == 256:
-                num_episodes = 30000     # 35000
-            else:
-                raise NotImplementedError
 
-        elif "compas" in args.save_dir and args.env_name in ["gym_midline:compas-v01"]:
-            if args.num_steps == 128:
-                num_episodes = 78124     # 75000
-            elif args.num_steps == 256:
-                num_episodes = 19530     # 35000
-            else:
-                raise NotImplementedError
-
-        elif "heloc" in args.save_dir and args.env_name in ["gym_midline:heloc-v0", "gym_midline:heloc-v01"]:
-            if args.num_steps == 128:
-                num_episodes = 78124     # 75000
-            elif args.num_steps == 256:
-                num_episodes = 19530     # 35000
-            else:
-                raise NotImplementedError
+        else:
+            raise NotImplementedError
 
         save_path = os.path.join(args.save_dir, args.algo, args.env_name + f"_{num_episodes}.pt")
-        # save_path = os.path.join(args.save_dir, args.algo, "gym_midline")
         print(f"Loading trained model: {save_path}")
         actor_critic, ob_rms = torch.load(save_path)
         actor_critic.eval()
@@ -179,7 +158,6 @@ def main():
                     rollouts.masks[step])
 
             # Obser reward and next obs
-            # print(action)
             obs, reward, done, infos, _ = envs.step(action)
 
             for info in infos:
@@ -262,5 +240,4 @@ def main():
 
 
 if __name__ == "__main__":
-
     main()

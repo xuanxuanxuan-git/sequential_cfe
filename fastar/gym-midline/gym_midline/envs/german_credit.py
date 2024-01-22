@@ -2,13 +2,12 @@ import gym, torch
 import numpy as np
 import random, copy, os, sys
 from sklearn.neighbors import NearestNeighbors
-from scipy import stats
 
 sys.path.append("../../../../")
 sys.path.append("../")
 sys.path.append("../../")
 import classifier_dataset as classifier
-from util import *
+
 
 class GermanCredit(gym.Env):
     metadata = {"render.modes": ["human"]}
@@ -28,7 +27,7 @@ class GermanCredit(gym.Env):
         low = np.ones(shape=len(dataset.columns)) * -1.0
         high = np.ones(shape=len(dataset.columns))
         self.observation_space = gym.spaces.Box(
-            low=low, high=high, dtype=np.float64
+            low=low, high=high, dtype=np.float
         )
         self.state = None
         self.dist_lambda = dist_lambda
@@ -43,7 +42,6 @@ class GermanCredit(gym.Env):
         self.state_count = 0
         self.scaler = scaler
         self.classifier = clf
-        self.initial_state = None
         self.states = {}
         self.states_reverse = {}
         self.no_neighbours = 1
@@ -75,7 +73,6 @@ class GermanCredit(gym.Env):
         print(
             len(self.undesirable_x), "Total datapoints to run the approach on"
         )
-        self.kde = stats.gaussian_kde(dataset.T)
         self.reset()
 
     def model(self):
@@ -83,32 +80,12 @@ class GermanCredit(gym.Env):
         probability_class1 = self.classifier.predict_proba(
             self.state.reshape(1, -1)
         )[0][1]
-        # print("resulting state:", self.state, probability_class1)
         # If the probability of belonging to the desired class is greater than 0.5, then it is a valid CFE.
         if probability_class1 >= 0.5:
-            next_state_noise = sample_plausible_noise(self.state, sigma=0.1, n_samples=50, kde=self.kde)
-            noise_air = calculate_ir(next_state_noise, self.classifier)
-            # print(next_state_noise)
-            # print("Noise AIR", noise_air)
-            reward = 100 - noise_air*100
-            if reward >= 75:
-                return reward, True
-            else: 
-                return probability_class1, False
-        
+            return 100, True
         return probability_class1, False
 
-    def shift_mean(self, center):
-        next_state_center = calculate_mean_fast(center, sigma=0.01, n_samples=50, kde=self.kde)
-        # print(next_state_center)
-        # print(next_state_noise)
-        return next_state_center
-    
     def step(self, action):
-
-        # if not isinstance(action, int) and len(action) == 1:
-        #     action = action[0]
-
         if isinstance(action, torch.Tensor):
             action = action.numpy()[0][0]
             assert isinstance(action, (int, np.int64))
@@ -131,9 +108,9 @@ class GermanCredit(gym.Env):
             )  # this is the feature that is changing
             decrease = bool(action % 2)
             if decrease:
-                amount = -0.1
+                amount = -0.05
             else:
-                amount = 0.1
+                amount = 0.05
 
         elif type_ == 2:
             decrease = False
@@ -169,10 +146,6 @@ class GermanCredit(gym.Env):
             return self.state, reward, done, info
 
         action_ = amount
-        # print("current state: ", self.state)
-        # print("saved initial state:", self.initial_state)
-        # print("action amount", action_)
-        # print("changed feature", feature_changing)
         next_state = list(copy.deepcopy(self.state))
         next_state[feature_changing] = self.state[feature_changing] + action_
         knn_dist_loss = self.knn_lambda * self.distance_to_closest_k_points(
@@ -187,8 +160,6 @@ class GermanCredit(gym.Env):
             ):  # lowest value for a feature is -1.0
                 self.state = np.array(next_state)
                 reward, done = self.model()
-                if not done:
-                    self.state = self.shift_mean(next_state)
                 reward = (
                     reward - constant - knn_dist_loss
                 )  # constant cost for each action
@@ -203,8 +174,6 @@ class GermanCredit(gym.Env):
                     next_state
                 )  # change self.state only if next_state is valid
                 reward, done = self.model()
-                if not done:
-                    self.state = self.shift_mean(next_state)
                 reward = reward - constant - knn_dist_loss
             else:
                 reward = -10
@@ -232,8 +201,6 @@ class GermanCredit(gym.Env):
             self.state = self.scaler.transform(
                 np.array(self.undesirable_x[seq]).reshape(1, -1)
             )[0]
-        # print("initial state: ", self.state)
-        self.initial_state = self.state
         return self.state
 
     def render(self, mode="human", close=False):
