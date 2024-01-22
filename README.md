@@ -39,13 +39,16 @@ results
 
 ## Baselines
 
-Wachter, GrSp, DiCE, CoGS, PROBE, ARAR, and ROAR are implemented using the [CARLA](https://github.com/carla-recourse/CARLA/tree/main?tab=readme-ov-file) package. To set up the environment for CARLA, run the following command:
+Wachter, GrSp, DiCE, CoGS, PROBE, ARAR, and ROAR are implemented using the [CARLA](https://github.com/carla-recourse/CARLA/tree/main?tab=readme-ov-file) package. We keep the implementation of the aforementioned baselines in a separate [code repository](https://anonymous.4open.science/r/robust_cfe_baselines) as the code environment requires packages of different versions. Instructions about this repository can be found in its [README.md](https://anonymous.4open.science/r/robust_cfe_baselines/README.md) file. 
+
+To set up the environment for CARLA, run the following command:
 ```
 pip install carla-recourse
 ``` 
 CoGS, PROBE, ARAR, and ROAR are not implemented in the original CARLA package, we adapted these methods into the CARLA framework through the following reference:
 - PROCE, ARAR, and ROAR: [source](https://github.com/MartinPawel/ProbabilisticallyRobustRecourse/tree/main)
 - CoGS: [source](https://github.com/marcovirgolin/robust-counterfactuals)
+
 
 FastAR can be run without additional configurations. 
 - FastAR: [source](https://github.com/vsahil/FastAR-RL-for-generating-AR/tree/submit)
