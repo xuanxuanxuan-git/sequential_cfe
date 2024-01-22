@@ -4,6 +4,7 @@ import pandas as pd
 import sklearn
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import confusion_matrix
@@ -20,7 +21,7 @@ def predict_single(arr, scaler, clf, pass_scaler=True):
     return clf.predict(arr)[0]
 
 
-def architecture(parameter, dataset, y, drop_, X, random_state, drop=True):
+def architecture(parameter, dataset, y, drop_, X, random_state, drop=True, linear=False):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, random_state=random_state)
     scaler = MinMaxScaler(feature_range=(-1, 1))
     scaler.fit(X_train)
@@ -34,7 +35,10 @@ def architecture(parameter, dataset, y, drop_, X, random_state, drop=True):
     if drop_ == ["y"]:
         clf = MLPClassifier(random_state=42, max_iter=400)
     else: 
-        clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
+        if linear:
+            clf = LogisticRegression(random_state=random_state)
+        else:
+            clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
                         hidden_layer_sizes=(5, 3), max_iter=10000, random_state=random_state)
     clf.fit(X_train_, y_train)
 
@@ -156,8 +160,8 @@ def rescale_dataset(dataset):
 
 if __name__ == "__main__":
     train_model_german()
-    # train_model_adult()
+    train_model_adult()
     # train_model_default()
-    # train_model_compas()
+    train_model_compas()
     # train_model_heloc()
     # train_model_syn_dataset()
