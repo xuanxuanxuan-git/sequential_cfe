@@ -2,6 +2,13 @@
 
 Our method generates a sequence of robust recourse, such that even if users implement the recourse in a noisy way, they are still very likely to get the desirable prediction outcome.
 
+## Updated Experimental Results -- In response to Reviewer \#3 \& \#4
+
+![Updated Table 1](updated_experimental_results.PNG)
+
+We have included the performance results of CROCO -- proposed in paper [a] (Generating robust counterfactual explanations. Guyomard, V., Fessant, F., Guyet, T., Bouadi, T. and Termier, A., 2023, September. In ECML PKDD). **The results do not change our conclusions**.
+
+
 ## Installation
 
 Run the following command to install all the required packages to run ROSE
