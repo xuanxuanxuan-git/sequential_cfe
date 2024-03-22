@@ -4,7 +4,7 @@ Our method generates a sequence of robust recourse, such that even if users impl
 
 ## Updated Experimental Results -- In response to Reviewer \#3 \& \#4
 
-<img src="updated_experimental_results.PNG" width="550">
+<img src="updated_experimental_results.PNG" width="650">
 
 We have included the performance results of CROCO -- proposed in paper [a] (Generating robust counterfactual explanations. Guyomard, V., Fessant, F., Guyet, T., Bouadi, T. and Termier, A., 2023, September. In ECML PKDD). **The results do not change our conclusions**.
 
