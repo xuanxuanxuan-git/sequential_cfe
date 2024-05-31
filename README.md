@@ -2,13 +2,6 @@
 
 Our method generates a sequence of robust recourse, such that even if users implement the recourse in a noisy way, they are still very likely to get the desirable prediction outcome.
 
-## Updated Experimental Results -- In response to Reviewer \#3 \& \#4
-
-<img src="updated_experimental_results.PNG" width="650">
-
-We have included the performance results of CROCO -- proposed in paper [a] (Generating robust counterfactual explanations. Guyomard, V., Fessant, F., Guyet, T., Bouadi, T. and Termier, A., 2023, September. In ECML PKDD). **The results do not change our conclusions**.
-
-
 ## Installation
 
 Run the following command to install all the required packages to run ROSE
@@ -46,15 +39,16 @@ results
 
 ## Baselines
 
-Wachter, GrSp, DiCE, CoGS, PROBE, ARAR, and ROAR are implemented using the [CARLA](https://github.com/carla-recourse/CARLA/tree/main?tab=readme-ov-file) package. We keep the implementation of the aforementioned baselines in a separate [code repository](https://anonymous.4open.science/r/robust_cfe_baselines) as the code environment requires packages of different versions. Instructions about this repository can be found in its [README.md](https://anonymous.4open.science/r/robust_cfe_baselines/README.md) file. 
+Wachter, GrSp, DiCE, CoGS, PROBE, CROCO, ARAR, and ROAR are implemented using the [CARLA](https://github.com/carla-recourse/CARLA/tree/main?tab=readme-ov-file) package. We keep the implementation of the aforementioned baselines in a separate [code repository](https://anonymous.4open.science/r/robust_cfe_baselines) as the code environment requires packages of different versions. Instructions about this repository can be found in its [README.md](https://anonymous.4open.science/r/robust_cfe_baselines/README.md) file. 
 
 To set up the environment for CARLA, run the following command:
 ```
 pip install carla-recourse
 ``` 
-CoGS, PROBE, ARAR, and ROAR are not implemented in the original CARLA package, we adapted these methods into the CARLA framework through the following reference:
-- PROCE, ARAR, and ROAR: [source](https://github.com/MartinPawel/ProbabilisticallyRobustRecourse/tree/main)
+CoGS, PROBE, CROCO, ARAR, and ROAR are not implemented in the original CARLA package, we adapted these methods into the CARLA framework through the following reference:
+- PROBE, ARAR, and ROAR: [source](https://github.com/MartinPawel/ProbabilisticallyRobustRecourse/tree/main)
 - CoGS: [source](https://github.com/marcovirgolin/robust-counterfactuals)
+- CROCO: [source](https://github.com/twi09/CARLA_inclusion)
 
 
 FastAR can be run without additional configurations. 
