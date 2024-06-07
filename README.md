@@ -2,6 +2,17 @@
 
 Our method generates a sequence of robust recourse, such that even if users implement the recourse in a noisy way, they are still very likely to get the desirable prediction outcome.
 
+
+## Complete experimental results
+As mentioned in <i>Section V-F</i>, we include the complete experimental results and additional discussions in this code repository. The appendices are available in the [appendix document](ICDM24_ROSE_appendices.pdf).
+
+The structure of the appendices is as follows:
+- Appendix A: comparison of different formulations of noise in current literature (supplementary to <i>Section II</i>).
+- Appendix B.1: performance of ROSE under different hyper-parameter values in its recourse generation (supplementary to <i>Section V-F(a)-(c)</i>).
+- Appendix B.2: performance of all methods under different magnitude of noise used in evaluation (supplementary to the last paragraph of <i>Section V-F</i>).
+- Appendix B.3-B.4: performance and discussion about additional baselines ROAR and ARAR. 
+- Appendix C: Implementation details (Supplementary to <i>Section V-D</i>). 
+
 ## Installation
 
 Run the following command to install all the required packages to run ROSE
